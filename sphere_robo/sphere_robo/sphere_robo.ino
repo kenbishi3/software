@@ -36,24 +36,30 @@ void loop() {
   if(BLE.available()){
     char ble_data = BLE.read();
     Serial.write(ble_data);
-    BLE.write(ble_data);
+    //BLE.write(ble_data);
+    
     switch(ble_data){
       case  'w' : left_motor(CW,1000);
                   right_motor(CW,1000);
                   break;
       case  's' : left_motor(STOP,0);
                   right_motor(STOP,0);
+                  
                   break;
       case  'a' : left_motor(CCW,500);
                   right_motor(CW,500);
+                  
                   break;
       case  'd' : left_motor(CW,500);
                   right_motor(CCW,500);
+                  
                   break;
       case  'z' : left_motor(CCW,1000);
                   right_motor(CCW,1000);
                   break;
-      default:    break;
+      default:    left_motor(STOP,0);
+                  right_motor(STOP,0);
+                  break;
     }
     
   }

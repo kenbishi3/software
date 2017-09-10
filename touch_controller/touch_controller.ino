@@ -21,7 +21,8 @@ enum CY8C201A0_register{
   COMMAND_REG = 0xA0,
 };
 
-//#define BLE_COM
+#define BLE_COM
+#define TOUCH_ON
 
 SoftwareSerial BLE(3,2);  //RX,TX
 void setup() {
@@ -43,6 +44,7 @@ void setup() {
   BLE.begin(9600);
   Serial.println("BLE MLDP");
   BLE.println("E,0,001EC047CA99");
+  //BLE.println("E,0,001EC047D687");
   delay(100);
   digitalWrite(CMD_MLDP,HIGH);
   #endif
@@ -50,13 +52,10 @@ void setup() {
   Wire.begin();
   #ifdef  TOUCH_ON
   Serial.println("Touch Sensor");
-  Serial.println(readData(TOUCH_ADDRESS,0x7A),HEX);
   init_touch();
   #endif
 
   Serial.println("acceleration sensor");
-  Serial.println(readData(BMA250_ADDRESS,0x00),HEX);
-  Serial.println(readData(BMA250_ADDRESS,0x01),HEX);
 }
 
 void writeRegister(uint8_t address, uint8_t reg){
@@ -100,13 +99,10 @@ void init_touch(){
   
 }
 
-uint8_t readTouch(uint8_t port){
-  if(port == 0){
-    return readData(TOUCH_ADDRESS,CS_READ_STATUS0);
-  }
-  else{
-    return readData(TOUCH_ADDRESS,CS_READ_STATUS1);
-  }
+int readTouch(){
+  int data;
+  data = readData(TOUCH_ADDRESS,CS_READ_STATUS1) << 5 | readData(TOUCH_ADDRESS,CS_READ_STATUS0);
+  return data;
 }
 
 
@@ -125,17 +121,26 @@ void readAccel(){
   }
 }
 
+
 void loop() {
   // put your main code here, to run repeatedly:
-  uint16_t touchSensor = 0;
-
-  //touchSensor = readTouch(1) << 5 | readTouch(0);
-  //Serial.println(touchSensor,BIN);
+  int touch = readTouch();
+  switch(touch){
+    case 1 : Serial.println("FORWARD"); BLE.write('w'); break;
+    case 4 : Serial.println("RIGHT"); BLE.write('d'); break;
+    case 16 : Serial.println("BACK"); BLE.write('z'); break;
+    case 64 : Serial.println("LEFT"); BLE.write('a'); break;
+    case 256 : Serial.println("STOP"); BLE.write('s'); break;
+    default : break; 
+    
+  }
+  
   readAccel();
-  Serial.print("X : ");
-  Serial.print(accel_x*0.0039);
-  Serial.print(" Y : ");
-  Serial.print(accel_y*0.0039);
-  Serial.print(" Z : ");
-  Serial.println(accel_z*0.0039);
+  //Serial.print("X : ");
+  //Serial.print(accel_x*0.0039);
+  //Serial.print(" Y : ");
+  //Serial.print(accel_y*0.0039);
+  //Serial.print(" Z : ");
+  //Serial.println(accel_z*0.0039);
+  //delay(200);
 }
