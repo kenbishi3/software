@@ -127,9 +127,12 @@ void loop() {
   int touch = readTouch();
   switch(touch){
     case 1 : Serial.println("FORWARD"); BLE.write('w'); break;
+    case 2 : Serial.println("STOP_TRACK");BLE.write('0'); break;
     case 4 : Serial.println("RIGHT"); BLE.write('d'); break;
     case 16 : Serial.println("BACK"); BLE.write('z'); break;
+    case 32 : Serial.println("PLAY_TRACK2"); BLE.write('2'); break;
     case 64 : Serial.println("LEFT"); BLE.write('a'); break;
+    case 128 : Serial.println("PLAY_TRACK1"); BLE.write('1'); break;
     case 256 : Serial.println("STOP"); BLE.write('s'); break;
     default : break; 
     
