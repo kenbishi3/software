@@ -9,7 +9,9 @@
 #define TOUCH_ADDRESS 0x0
 #define BMA250_ADDRESS 0x18
 
-signed int accel_x,accel_y,accel_z;
+signed int raw_x,raw_y,raw_z;
+double accel_x,pre_x,accel_z,pre_z;
+int mode = 0;
 
 enum CY8C201A0_register{
   CS_ENABLE0 = 0x06,
@@ -43,7 +45,7 @@ void setup() {
   #ifdef  BLE_COM
   BLE.begin(9600);
   Serial.println("BLE MLDP");
-  BLE.println("E,0,001EC047CA99");
+  BLE.println("E,0,001EC047CB32");
   //BLE.println("E,0,001EC047D687");
   delay(100);
   digitalWrite(CMD_MLDP,HIGH);
@@ -56,6 +58,9 @@ void setup() {
   #endif
 
   Serial.println("acceleration sensor");
+  readAccel();
+  pre_x = raw_x * 3.9;
+  pre_z = raw_z * 3.9;
 }
 
 void writeRegister(uint8_t address, uint8_t reg){
@@ -107,25 +112,30 @@ int readTouch(){
 
 
 void readAccel(){
-  accel_x = (readData(BMA250_ADDRESS,0x03) << 2) | (readData(BMA250_ADDRESS,0x02) >> 6);
-  if(accel_x & 0x0200){
-    accel_x |= 0xFC00;
+  raw_x = (readData(BMA250_ADDRESS,0x03) << 2) | (readData(BMA250_ADDRESS,0x02) >> 6);
+  if(raw_x & 0x0200){
+    raw_x |= 0xFC00;
   }
-  accel_y = (readData(BMA250_ADDRESS,0x05) << 2) | (readData(BMA250_ADDRESS,0x04) >> 6);
-  if(accel_y & 0x0200){
-    accel_y |= 0xFC00;
+  raw_y = (readData(BMA250_ADDRESS,0x05) << 2) | (readData(BMA250_ADDRESS,0x04) >> 6);
+  if(raw_y & 0x0200){
+    raw_y |= 0xFC00;
   }
-  accel_z = (readData(BMA250_ADDRESS,0x07) << 2) | (readData(BMA250_ADDRESS,0x06) >> 6);
-  if(accel_z & 0x0200){
-    accel_z |= 0xFC00;
+  raw_z = (readData(BMA250_ADDRESS,0x07) << 2) | (readData(BMA250_ADDRESS,0x06) >> 6);
+  if(raw_z & 0x0200){
+    raw_z |= 0xFC00;
   }
 }
 
 
 void loop() {
   // put your main code here, to run repeatedly:
-  int touch = readTouch();
+  int touch = (readTouch() & 0b111000000) >> 6;
+  
   switch(touch){
+    case 1: mode = 1; Serial.println("#M1"); break;
+    case 2: mode = 2; Serial.println("#M2"); break;
+    case 4: mode = 3; Serial.println("#M3"); break;
+    /*
     case 1 : Serial.println("FORWARD"); BLE.write('w'); break;
     case 2 : Serial.println("STOP_TRACK");BLE.write('0'); break;
     case 4 : Serial.println("RIGHT"); BLE.write('d'); break;
@@ -135,15 +145,34 @@ void loop() {
     case 128 : Serial.println("PLAY_TRACK1"); BLE.write('1'); break;
     case 256 : Serial.println("STOP"); BLE.write('s'); break;
     default : break; 
-    
+    */
   }
   
   readAccel();
+  accel_x = raw_x * 3.9;
+  accel_z = raw_z * 3.9;
+  double dif_x = accel_x - pre_x;
+  double dif_z = accel_z - pre_z;
+  
+  if(abs(dif_x) > 1000 || abs(dif_z) > 1000){
+    switch(mode){
+      case 0: Serial.println("#M0"); BLE.write("0"); break;
+      case 1: Serial.println("#M1"); BLE.write("1"); break;
+      case 2: Serial.println("#M2"); BLE.write("2"); break;
+      case 3: Serial.println("#M3"); BLE.write("3"); break;
+      default: break;
+    }
+  }
   //Serial.print("X : ");
-  //Serial.print(accel_x*0.0039);
+  //Serial.print(raw_x*0.0039);
   //Serial.print(" Y : ");
-  //Serial.print(accel_y*0.0039);
+  //Serial.print(raw_y*0.0039);
   //Serial.print(" Z : ");
-  //Serial.println(accel_z*0.0039);
+  //Serial.println(raw_z*0.0039);
   //delay(200);
+  pre_x = accel_x;
+  pre_z = accel_z;
+  
+
+  
 }
