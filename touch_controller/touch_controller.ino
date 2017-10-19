@@ -10,7 +10,7 @@
 #define BMA250_ADDRESS 0x18
 
 signed int raw_x,raw_y,raw_z;
-double accel_x,pre_x,accel_z,pre_z;
+double accel_y,pre_y,accel_z,pre_z;
 int mode = 0;
 
 enum CY8C201A0_register{
@@ -39,28 +39,43 @@ void setup() {
   digitalWrite(WAKE_SW,HIGH);
   digitalWrite(CMD_MLDP,LOW);
   Serial.begin(9600);
-  delay(1000);
+  delay(500);
   Serial.println("Touch Controller START");
 
   #ifdef  BLE_COM
   BLE.begin(9600);
-  Serial.println("BLE MLDP");
+  Serial.println("BLE START");
   BLE.println("E,0,001EC047CB32");
   //BLE.println("E,0,001EC047D687");
   delay(100);
   digitalWrite(CMD_MLDP,HIGH);
-  #endif
-
-  Wire.begin();
-  #ifdef  TOUCH_ON
-  Serial.println("Touch Sensor");
-  init_touch();
+  delay(1000);
+  
+  while(!(BLE.available()==0)){
+    char ble_data = BLE.read();
+    Serial.write(ble_data);
+  }
+  Serial.println("");
+  Serial.println("Connected");
+  
   #endif
 
   Serial.println("acceleration sensor");
   readAccel();
-  pre_x = raw_x * 3.9;
+  delay(100);
+  pre_y = raw_y * 3.9;
   pre_z = raw_z * 3.9;
+  
+
+  Wire.begin();
+  delay(100);
+  #ifdef  TOUCH_ON
+  Serial.println("Touch Sensor");
+  init_touch();
+  delay(100);
+  #endif
+
+
 }
 
 void writeRegister(uint8_t address, uint8_t reg){
@@ -80,7 +95,7 @@ uint8_t readData(uint8_t address,uint8_t reg){
   uint8_t data = -1;
   writeRegister(address,reg);
   Wire.requestFrom(address,1);
-  delay(10);
+  //delay(10);
   if(Wire.available()){
     data = Wire.read();
   }
@@ -90,16 +105,25 @@ uint8_t readData(uint8_t address,uint8_t reg){
 void init_touch(){
   //setup Mode
   writeCommand(TOUCH_ADDRESS,COMMAND_REG,0x08);
+  delay(10);
   //Disable GPIO
   writeCommand(TOUCH_ADDRESS,GPIO_ENABLE0,0);
   writeCommand(TOUCH_ADDRESS,GPIO_ENABLE1,0);
+  delay(10);
   //Enable CapSense input
   writeCommand(TOUCH_ADDRESS,CS_ENABLE0,0x1F);
   writeCommand(TOUCH_ADDRESS,CS_ENABLE1,0x1F);
+  delay(10);
+  //Save to Flash
+  writeCommand(TOUCH_ADDRESS,COMMAND_REG,0x01);
+  delay(120);
+  //Software Reset
+  writeCommand(TOUCH_ADDRESS,COMMAND_REG,0x08);
+  writeCommand(TOUCH_ADDRESS,COMMAND_REG,0x06);
+  delay(50);
   //Normal Mode
   writeCommand(TOUCH_ADDRESS,COMMAND_REG,0x07);
   delay(100);
-  
 
   
 }
@@ -128,13 +152,22 @@ void readAccel(){
 
 
 void loop() {
+  //init_touch();
   // put your main code here, to run repeatedly:
-  int touch = (readTouch() & 0b111000000) >> 6;
+
+  //if(BLE.available()){
+  //  char ble_data = BLE.read();
+  //  Serial.write(ble_data);
+  //}
+
   
+  int touch = (readTouch() & 0b111000000) >> 6;
+  //int touch = readTouch();
   switch(touch){
     case 1: mode = 1; Serial.println("#M1"); break;
     case 2: mode = 2; Serial.println("#M2"); break;
     case 4: mode = 3; Serial.println("#M3"); break;
+    default: Serial.println(touch);break;
     /*
     case 1 : Serial.println("FORWARD"); BLE.write('w'); break;
     case 2 : Serial.println("STOP_TRACK");BLE.write('0'); break;
@@ -147,14 +180,14 @@ void loop() {
     default : break; 
     */
   }
-  
+  delay(100);
   readAccel();
-  accel_x = raw_x * 3.9;
+  accel_y = raw_y * 3.9;
   accel_z = raw_z * 3.9;
-  double dif_x = accel_x - pre_x;
+  double dif_y = accel_y - pre_y;
   double dif_z = accel_z - pre_z;
   
-  if(abs(dif_x) > 1000 || abs(dif_z) > 1000){
+  if(abs(dif_y) > 1000 || abs(dif_z) > 1000){
     switch(mode){
       case 0: Serial.println("#M0"); BLE.write("0"); break;
       case 1: Serial.println("#M1"); BLE.write("1"); break;
@@ -163,14 +196,13 @@ void loop() {
       default: break;
     }
   }
-  //Serial.print("X : ");
-  //Serial.print(raw_x*0.0039);
+  
   //Serial.print(" Y : ");
-  //Serial.print(raw_y*0.0039);
+  //Serial.print(accel_y);
   //Serial.print(" Z : ");
-  //Serial.println(raw_z*0.0039);
+  //Serial.println(accel_z);
   //delay(200);
-  pre_x = accel_x;
+  pre_y = accel_y;
   pre_z = accel_z;
   
 

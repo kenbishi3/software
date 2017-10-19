@@ -51,7 +51,7 @@ void setup() {
   Serial.print(F("Error code: "));
   Serial.println(result);
 
-  MP3player.setVolume(8,8);
+  MP3player.setVolume(3,3);
 
   //result = MP3player.playTrack(1);
   //Serial.print(F("Error code: "));
@@ -71,17 +71,20 @@ void loop() {
                   right_motor(STOP,0);
                   MP3player.stopTrack();
                   break;
-      case  '1' : left_motor(CCW,300);
-                  right_motor(CW,300);
+      case  '1' : left_motor(CCW,500);
+                  right_motor(CW,500);
+                  
                   Serial.println("Turn Left");
                   delay(500);
                   left_motor(STOP,0);
                   right_motor(STOP,0);
+                  
                   Serial.println("STOP");
                   bufferClear();
                   break;
-      case  '2' : left_motor(CW,50);
-                  right_motor(CW,50);
+      case  '2' : left_motor(CW,600);
+                  right_motor(CW,600);
+                  digitalWrite(LED,HIGH);
                   Serial.print("state: ");
                   //MP3player.playTrack(1);
                   Serial.println(MP3player.getState());
@@ -90,7 +93,7 @@ void loop() {
                     Serial.println("ready");
                   }
                   else if( MP3player.getState() == initialized){
-                    MP3player.playTrack(1);
+                    MP3player.playMP3("track001.mp3",0);
                   }
                   else if( MP3player.getState() == playback){
                     MP3player.pauseMusic();
@@ -102,22 +105,26 @@ void loop() {
                   }
                   
                   Serial.println("Forword");
-                  delay(5000);
+                  delay(5500);
                   MP3player.pauseMusic();
                   left_motor(STOP,0);
                   right_motor(STOP,0);
+                  digitalWrite(LED,LOW);
                   Serial.println("STOP");
                   bufferClear();
                   break;
-      case  '3' : left_motor(CW,300);
-                  right_motor(CCW,300);
+      case  '3' : left_motor(CW,500);
+                  right_motor(CCW,500);
                   Serial.println("Turn Right");
                   delay(500);
                   left_motor(STOP,0);
                   right_motor(STOP,0);
                   Serial.println("STOP");
                   bufferClear();
-                 
+                  break;
+      case 'C' :  MP3player.stopTrack();
+                  MP3player.playMP3("connect.mp3",0);
+                  delay(500);
                   break;
       default:    left_motor(STOP,0);
                   right_motor(STOP,0);
