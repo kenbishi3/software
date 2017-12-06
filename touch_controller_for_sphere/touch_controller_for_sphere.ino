@@ -34,7 +34,7 @@ void setup() {
   pinMode(WAKE_SW,OUTPUT);
   pinMode(CMD_MLDP,OUTPUT);
   
-  digitalWrite(LED,HIGH);
+  //digitalWrite(LED,HIGH);
   digitalWrite(WAKE_HW,HIGH);
   digitalWrite(WAKE_SW,HIGH);
   digitalWrite(CMD_MLDP,LOW);
@@ -45,9 +45,9 @@ void setup() {
   #ifdef  BLE_COM
   BLE.begin(9600);
   Serial.println("BLE START");
-  //BLE.println("E,0,001EC04A2A44");
-  BLE.println("E,0,001EC047CB32");
-  //BLE.println("E,0,001EC047D687");
+  //BLE.println("E,0,001EC04A2A44");//Sphere
+  //BLE.println("E,0,001EC047CB32");
+  BLE.println("E,0,001EC047D687");
   delay(100);
   digitalWrite(CMD_MLDP,HIGH);
   delay(1000);
@@ -162,42 +162,34 @@ void loop() {
   //}
 
   
-  int touch = (readTouch() & 0b111000000) >> 6;
-  //int touch = (readTouch() & 0b000000111);
+  //int touch = (readTouch() & 0b111000000) >> 6;
+  int touch = (readTouch() & 0b000000001);
   //int touch = readTouch();
-  switch(touch){
-    case 1: mode = 1; Serial.println("#M1"); break;
-    case 2: mode = 2; Serial.println("#M2"); break;
-    case 4: mode = 3; Serial.println("#M3"); break;
-    default: Serial.println(touch);break;
-    /*
-    case 1 : Serial.println("FORWARD"); BLE.write('w'); break;
-    case 2 : Serial.println("STOP_TRACK");BLE.write('0'); break;
-    case 4 : Serial.println("RIGHT"); BLE.write('d'); break;
-    case 16 : Serial.println("BACK"); BLE.write('z'); break;
-    case 32 : Serial.println("PLAY_TRACK2"); BLE.write('2'); break;
-    case 64 : Serial.println("LEFT"); BLE.write('a'); break;
-    case 128 : Serial.println("PLAY_TRACK1"); BLE.write('1'); break;
-    case 256 : Serial.println("STOP"); BLE.write('s'); break;
-    default : break; 
-    */
+
+
+  if(touch){
+    while(readTouch() & 0b000000001){Serial.println("touch");};
+    if(mode == 0){
+      mode = 1;
+      digitalWrite(LED,HIGH);
+      Serial.println("ON");
+      BLE.print("ON");
+    }
+    else{
+      mode = 0;
+      digitalWrite(LED,LOW);
+      Serial.println("OFF");
+      BLE.print("OFF");
+    }
   }
+  
   delay(100);
   readAccel();
   accel_y = raw_y * 3.9;
   accel_z = raw_z * 3.9;
   double dif_y = accel_y - pre_y;
   double dif_z = accel_z - pre_z;
-  
-  if(abs(dif_y) > 1000 || abs(dif_z) > 1000){
-    switch(mode){
-      case 0: Serial.println("#M0"); BLE.write("0"); break;
-      case 1: Serial.println("#M1"); BLE.write("1"); break;
-      case 2: Serial.println("#M2"); BLE.write("2"); break;
-      case 3: Serial.println("#M3"); BLE.write("3"); break;
-      default: break;
-    }
-  }
+
   
   //Serial.print(" Y : ");
   //Serial.print(accel_y);
