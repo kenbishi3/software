@@ -1,13 +1,9 @@
 #include <SoftwareSerial.h>
-#include <SPI.h>
-#include <SdFat.h>
-#include <SFEMP3Shield.h>
-
 
 SoftwareSerial BLE(18,19); //RX,TX
 
 
-#define CMD_MLDP  4
+#define CMD_MLDP  6
 #define VREF1     3
 #define VREF2     5
 #define FIN1      14
@@ -17,11 +13,8 @@ SoftwareSerial BLE(18,19); //RX,TX
 #define CW        1
 #define CCW       2
 #define STOP      0
-#define AMP_SLP   10
 
-SdFat sd;
 
-SFEMP3Shield MP3player;
 
 void setup() {
   // put your setup code here, to run once:
@@ -32,30 +25,15 @@ void setup() {
   pinMode(RIN1,OUTPUT);
   pinMode(FIN2,OUTPUT);
   pinMode(RIN2,OUTPUT);
-  pinMode(AMP_SLP,OUTPUT);
 
   
   digitalWrite(CMD_MLDP,LOW);
-  digitalWrite(AMP_SLP,LOW);
+  
   Serial.begin(9600);
   BLE.begin(9600);
   Serial.println("Sphere robo start");
 
   int result;
-
-  if(!sd.begin(SD_SEL, SPI_FULL_SPEED)) sd.initErrorHalt();
-  // depending upon your SdCard environment, SPI_HAVE_SPEED may work better.
-  if(!sd.chdir("/")) sd.errorHalt("sd.chdir");
-  
-  result = MP3player.begin();
-  Serial.print(F("Error code: "));
-  Serial.println(result);
-
-  MP3player.setVolume(2,2);
-
-  //result = MP3player.playTrack(1);
-  //Serial.print(F("Error code: "));
-  //Serial.println(result);
 
 }
 
@@ -67,29 +45,17 @@ void loop() {
     //BLE.write(ble_data);
     
     switch(ble_data){
-      case  'w' : left_motor(CW,1000);
+      case  'f' : left_motor(CW,1000);
                   right_motor(CW,1000);
+                  BLE.println("CW");
                   break;
       case  's' : left_motor(STOP,0);
                   right_motor(STOP,0);
-                  
+                  BLE.println("STOP");
                   break;
-      case  'a' : left_motor(CCW,500);
+      case  'b' : left_motor(CCW,500);
                   right_motor(CW,500);
-                  
-                  break;
-      case  'd' : left_motor(CW,500);
-                  right_motor(CCW,500);
-                  
-                  break;
-      case  'z' : left_motor(CCW,1000);
-                  right_motor(CCW,1000);
-                  break;
-      case  '1' : MP3player.playTrack(1);
-                  break;
-      case  '2' : MP3player.playTrack(2);
-                  break;
-      case  '0' : MP3player.stopTrack();
+                  BLE.println("CCW");   
                   break;
       default:    left_motor(STOP,0);
                   right_motor(STOP,0);
