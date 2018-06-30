@@ -45,17 +45,21 @@ void loop() {
     //BLE.write(ble_data);
     
     switch(ble_data){
-      case  'f' : left_motor(CW,1000);
-                  right_motor(CW,1000);
+      case  '1' : left_motor(CW,200);
+                  right_motor(CCW,200);
                   BLE.println("CW");
                   break;
-      case  's' : left_motor(STOP,0);
+      case  '0' : left_motor(STOP,0);
                   right_motor(STOP,0);
                   BLE.println("STOP");
                   break;
-      case  'b' : left_motor(CCW,500);
-                  right_motor(CW,500);
+      case  '2' : left_motor(CCW,200);
+                  right_motor(CW,200);
                   BLE.println("CCW");   
+                  break;
+      case  'E' : left_motor(STOP,0);
+                  right_motor(STOP,0);
+                  
                   break;
       default:    left_motor(STOP,0);
                   right_motor(STOP,0);

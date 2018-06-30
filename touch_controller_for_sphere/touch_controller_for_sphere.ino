@@ -10,7 +10,7 @@
 #define BMA250_ADDRESS 0x18
 
 signed int raw_x,raw_y,raw_z;
-double accel_y,pre_y,accel_z,pre_z;
+double accel_x,accel_y,accel_z;
 int mode = 0;
 
 enum CY8C201A0_register{
@@ -45,9 +45,9 @@ void setup() {
   #ifdef  BLE_COM
   BLE.begin(9600);
   Serial.println("BLE START");
-  //BLE.println("E,0,001EC04A2A44");//Sphere
+  BLE.println("E,0,001EC04A2A44");//Sphere
   //BLE.println("E,0,001EC047CB32");
-  BLE.println("E,0,001EC047D687");
+  //BLE.println("E,0,001EC047D687");
   delay(100);
   digitalWrite(CMD_MLDP,HIGH);
   delay(1000);
@@ -64,8 +64,6 @@ void setup() {
   Serial.println("acceleration sensor");
   readAccel();
   delay(100);
-  pre_y = raw_y * 3.9;
-  pre_z = raw_z * 3.9;
   
 
   Wire.begin();
@@ -153,19 +151,7 @@ void readAccel(){
 
 
 void loop() {
-  //init_touch();
-  // put your main code here, to run repeatedly:
-
-  //if(BLE.available()){
-  //  char ble_data = BLE.read();
-  //  Serial.write(ble_data);
-  //}
-
-  
-  //int touch = (readTouch() & 0b111000000) >> 6;
   int touch = (readTouch() & 0b000000001);
-  //int touch = readTouch();
-
 
   if(touch){
     while(readTouch() & 0b000000001){Serial.println("touch");};
@@ -173,32 +159,38 @@ void loop() {
       mode = 1;
       digitalWrite(LED,HIGH);
       Serial.println("ON");
-      BLE.print("ON");
+      //BLE.print("ON");
     }
     else{
       mode = 0;
       digitalWrite(LED,LOW);
       Serial.println("OFF");
-      BLE.print("OFF");
+      BLE.print("E");
+      //BLE.print("OFF");
     }
   }
   
   delay(100);
-  readAccel();
-  accel_y = raw_y * 3.9;
-  accel_z = raw_z * 3.9;
-  double dif_y = accel_y - pre_y;
-  double dif_z = accel_z - pre_z;
 
-  
-  //Serial.print(" Y : ");
-  //Serial.print(accel_y);
-  //Serial.print(" Z : ");
-  //Serial.println(accel_z);
-  //delay(200);
-  pre_y = accel_y;
-  pre_z = accel_z;
-  
+  if(mode == 1){
+    readAccel();
+    accel_x = raw_x * 3.9;
+    accel_x = abs(accel_x);
 
-  
+    if(accel_x > 800){
+      Serial.println("1");
+      BLE.print("1"); 
+    }
+    else if(accel_x > 300){
+      Serial.println("0");
+      BLE.print("0");
+    }
+    else{
+      Serial.println("2");
+      BLE.print("2");
+    }
+    
+    //Serial.print(" X : ");
+    //Serial.println(accel_x);
+  }
 }
